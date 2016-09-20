@@ -9,6 +9,8 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Resource;
 
+import org.apache.log4j.Logger;
+
 import com.appleframework.jms.core.consumer.MessageConusmer2;
 import com.appleframework.jms.core.utils.ByteUtils;
 
@@ -17,6 +19,7 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
 /**
  * @author Cruise.Xu
@@ -24,6 +27,8 @@ import kafka.javaapi.consumer.ConsumerConnector;
  */
 public class ObjectMessageConsumer2 {
 	
+	private static Logger logger = Logger.getLogger(ObjectMessageConsumer2.class.getName());
+
 	@Resource
 	private MessageConusmer2<Object> messageConusmer2;
 	
@@ -59,10 +64,12 @@ public class ObjectMessageConsumer2 {
 	    for (final KafkaStream<byte[], byte[]> stream : streams) {
 	    	executor.submit(new Runnable() {
 				public void run() {
-                    ConsumerIterator<byte[], byte[]> it = stream.iterator();
+					ConsumerIterator<byte[], byte[]> it = stream.iterator();
 					while (it.hasNext()) {
-						byte[] message = it.next().message();
-						Object object = ByteUtils.fromByte(message);
+						MessageAndMetadata<byte[], byte[]> item = it.next();
+						String topic = item.topic();
+						logger.info("topic=" + topic);
+						Object object = ByteUtils.fromByte(item.message());
 						messageConusmer2.processMessage(object);
 					}
                 }

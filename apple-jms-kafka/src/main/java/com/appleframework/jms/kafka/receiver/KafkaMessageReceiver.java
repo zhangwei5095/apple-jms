@@ -1,5 +1,6 @@
-package com.appleframework.jms.kafka.consumer;
+package com.appleframework.jms.kafka.receiver;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,39 +10,41 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
-import com.appleframework.jms.core.consumer.MessageConusmer;
+import com.appleframework.jms.core.receiver.MessageReceiver;
+import com.appleframework.jms.core.sender.MessageObject;
+import com.appleframework.jms.core.utils.ByteUtils;
 
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
 
 /**
  * @author Cruise.Xu
  * 
  */
-public abstract class BytesMessageConsumer extends MessageConusmer<byte[]> {
+public abstract class KafkaMessageReceiver extends MessageReceiver<Serializable> {
 	
-	private final static Logger logger = LoggerFactory.getLogger(BytesMessageConsumer.class);
+	private static Logger logger = Logger.getLogger(KafkaMessageReceiver.class.getName());
 	
 	@Resource
 	private ConsumerConfig consumerConfig;
 	
-	protected String topic;
+	private String topic;
     
-	protected Integer partitionsNum;
+	private Integer partitionsNum;
 	
 	private ConsumerConnector connector;
 			
 	protected void init() {
 		
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-
+		
 		connector = Consumer.createJavaConsumerConnector(consumerConfig);
 		
 		String[] topics = topic.split(",");
@@ -56,25 +59,26 @@ public abstract class BytesMessageConsumer extends MessageConusmer<byte[]> {
 			streams.addAll(topicMessageStreams.get(topics[i]));
 		}
 		
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-		}
 	    //	    
-		final ExecutorService executor = Executors.newFixedThreadPool(partitionsNum * topics.length);
+		final ExecutorService executor = Executors.newFixedThreadPool(partitionsNum * topics.length);	    
 	    for (final KafkaStream<byte[], byte[]> stream : streams) {
 	    	executor.submit(new Runnable() {
+				@SuppressWarnings("unchecked")
 				public void run() {
-                    ConsumerIterator<byte[], byte[]> it = stream.iterator();
+					ConsumerIterator<byte[], byte[]> it = stream.iterator();
 					while (it.hasNext()) {
-						byte[] message = it.next().message();
-						processMessage(message);
+						MessageAndMetadata<byte[], byte[]> item = it.next();
+						String topic = item.topic();
+						logger.info("topic=" + topic);
+						MessageObject<Serializable> object = (MessageObject<Serializable>) ByteUtils.fromByte(item.message());
+						logger.info("msgId=" + object.getMsgId());
+						logger.info("trackId=" + object.getTrackId());
+						processMessage(object.getObject());
 					}
                 }
             });
 	    }
-	    	    
+	    
 	    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 	    	public void run() {
 	    		executor.shutdown();

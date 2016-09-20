@@ -1,4 +1,4 @@
-package com.appleframework.jms.rocketmq.consumer;
+package com.appleframework.jms.rocketmq.receiver;
 
 import java.util.List;
 
@@ -20,9 +20,9 @@ import com.appleframework.jms.rocketmq.RocketMQPushConsumer;
  * @author Cruise.Xu
  * 
  */
-public abstract class ObjectMessageConsumer extends MessageConusmer<Object> {
+public abstract class RocketmqMessageReceiver extends MessageConusmer<Object> {
 	
-	private final static Logger logger = LoggerFactory.getLogger(ObjectMessageConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(RocketmqMessageReceiver.class);
 	
 	private RocketMQPushConsumer consumer;
 	

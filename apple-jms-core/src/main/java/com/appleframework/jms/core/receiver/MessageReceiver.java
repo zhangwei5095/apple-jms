@@ -1,10 +1,10 @@
-package com.appleframework.jms.core.consumer;
+package com.appleframework.jms.core.receiver;
 
 /**
  * @author cruise.xu
  * 
  */
-public abstract class MessageConusmer<T> {
+public abstract class MessageReceiver<T> {
 	
 	public abstract void processMessage(T message);
 

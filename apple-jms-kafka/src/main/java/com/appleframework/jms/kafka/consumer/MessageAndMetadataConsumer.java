@@ -19,15 +19,16 @@ import kafka.consumer.ConsumerConfig;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
 
 /**
  * @author Cruise.Xu
  * 
  */
-public abstract class BytesMessageConsumer extends MessageConusmer<byte[]> {
+public abstract class MessageAndMetadataConsumer extends MessageConusmer<MessageAndMetadata<byte[], byte[]>> {
 	
-	private final static Logger logger = LoggerFactory.getLogger(BytesMessageConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(MessageAndMetadataConsumer.class);
 	
 	@Resource
 	private ConsumerConfig consumerConfig;
@@ -68,7 +69,7 @@ public abstract class BytesMessageConsumer extends MessageConusmer<byte[]> {
 				public void run() {
                     ConsumerIterator<byte[], byte[]> it = stream.iterator();
 					while (it.hasNext()) {
-						byte[] message = it.next().message();
+						MessageAndMetadata<byte[], byte[]> message = it.next();
 						processMessage(message);
 					}
                 }
@@ -98,4 +99,5 @@ public abstract class BytesMessageConsumer extends MessageConusmer<byte[]> {
 		if(null != connector)
 			connector.shutdown();
 	}
+	
 }
